@@ -24,14 +24,14 @@ namespace TenebroseItems
             GunExt.SetAnimationFPS(gun, gun.shootAnimation, 16);
             GunExt.SetAnimationFPS(gun, gun.reloadAnimation, 8);
             GunExt.AddProjectileModuleFrom(gun, (PickupObjectDatabase.GetById(125) as Gun), true, false);
-            Projectile projectile = UnityEngine.Object.Instantiate<Projectile>((PickupObjectDatabase.GetById(125) as Gun).DefaultModule.projectiles[0]);
+            Projectile projectile = Instantiate((PickupObjectDatabase.GetById(125) as Gun).DefaultModule.projectiles[0]);
             projectile.gameObject.SetActive(false);
             FakePrefab.MarkAsFakePrefab(projectile.gameObject);
             projectile.damageTypes = CoreDamageTypes.None;
             projectile.DefaultTintColor = new Color(0.5f, 0f, 1f);
             projectile.HasDefaultTint = true;
             projectile.GetComponent<PierceProjModifier>().penetration = 0;
-            UnityEngine.Object.DontDestroyOnLoad(projectile);
+            DontDestroyOnLoad(projectile);
             gun.DefaultModule.projectiles[0] = projectile;
             gun.DefaultModule.numberOfShotsInClip = 7;
             gun.reloadTime = 1.4f;
@@ -41,12 +41,10 @@ namespace TenebroseItems
             gun.muzzleFlashEffects.type = VFXPoolType.None;
             gun.quality = PickupObject.ItemQuality.SPECIAL;
             gun.barrelOffset.transform.localPosition = new Vector3(0.1875f, 0.1875f, 0f);
-            gun.encounterTrackable.EncounterGuid = "dragon_hand";
             gun.gunSwitchGroup = "BurningHand";
             gun.gunClass = GunClass.FIRE;
             projectile.FireApplyChance = 0.25f;
             projectile.baseData.damage += 0.8f;
-            gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames[0].eventInfo = "extinguish";
             foreach (tk2dSpriteAnimationFrame frame in gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames)
             {
                 tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
@@ -61,13 +59,13 @@ namespace TenebroseItems
                     frame.eventAudio = "Play_WPN_blasphemy_shot_01";
                 }
                 tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
-                DragonHandController.MakeOffset(def, new Vector2(0.1875f, 0.125f));
+                MakeOffset(def, new Vector2(0.1875f, 0.125f));
                 i++;
             }
             foreach (tk2dSpriteAnimationFrame frame in gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.shootAnimation).frames)
             {
                 tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
-                DragonHandController.MakeOffset(def, new Vector2(0.125f, 0f));
+                MakeOffset(def, new Vector2(0.125f, 0f));
             }
             gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames[0].triggerEvent = true;
             gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames[0].eventInfo = "extinguish";
@@ -90,31 +88,6 @@ namespace TenebroseItems
             float num6 = Mathf.Lerp(MinDamageMultiplier, MaxDamageMultiplier, Mathf.Clamp01((float)num3 / MaxRoll));
             projectile.AdditionalScaleMultiplier *= num5;
             projectile.baseData.damage *= num6;
-        }
-
-        public static void HandleAnimationEvent(tk2dSpriteAnimator arg1, tk2dSpriteAnimationClip arg2, int arg3)
-        {
-            tk2dSpriteAnimationFrame frame = arg2.GetFrame(arg3);
-            if (frame.eventInfo == "extinguish")
-            {
-                tk2dBaseSprite targetSprite = arg1.sprite;
-                if (targetSprite)
-                {
-                    Vector3 vector = targetSprite.WorldBottomLeft.ToVector3ZisY(0f);
-                    Vector3 vector2 = targetSprite.WorldTopRight.ToVector3ZisY(0f);
-                    float num = (vector2.y - vector.y) * (vector2.x - vector.x);
-                    float num2 = 25f * num;
-                    int num3 = Mathf.CeilToInt(Mathf.Max(1f, num2 * BraveTime.DeltaTime));
-                    int num4 = num3;
-                    Vector3 minPosition = vector;
-                    Vector3 maxPosition = vector2;
-                    Vector3 direction = Vector3.up / 2f;
-                    float angleVariance = 120f;
-                    float magnitudeVariance = 0.2f;
-                    float? startLifetime = new float?(UnityEngine.Random.Range(0.8f, 1.25f));
-                    GlobalSparksDoer.DoRandomParticleBurst(num4, minPosition, maxPosition, direction, angleVariance, magnitudeVariance, null, startLifetime, null, GlobalSparksDoer.SparksType.DARK_MAGICKS);
-                }
-            }
         }
 
         public static void MakeOffset(tk2dSpriteDefinition def, Vector2 offset)
