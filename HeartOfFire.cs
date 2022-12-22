@@ -76,7 +76,7 @@ namespace TenebroseItems
 
         private void DidDamage(PlayerController player, float damage, bool fatal, HealthHaver hh)
         {
-            if (hh.gameActor != null && hh.gameActor.GetEffect("fire") != null)
+            if (hh.gameActor != null && hh.gameActor.GetEffect("fire") != null && !hh.IsDead)
             {
                 hh.ApplyDamage(damage / 2f, Vector2.zero, "Heart of Fire Extra Damage", CoreDamageTypes.None, DamageCategory.Normal, true, null, false);
             }
