@@ -5,10 +5,14 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using ItemAPI;
-using MonoMod.RuntimeDetour;
+using HarmonyLib;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
+
 
 namespace TenebroseItems
 {
+    [HarmonyPatch]
     public class HeartOfFire : PassiveItem
     {
         public static void Init()
@@ -23,10 +27,36 @@ namespace TenebroseItems
                 " levels which normally will make something like it's heart a commodity that would most likely sell for a small fortune. With that knowledge in retrospect, it wasn't such a good idea to come down here was it?";
             ItemBuilder.SetupItem(item, shortDesc, longDesc, "spapi");
             item.quality = ItemQuality.SPECIAL;
-            new Hook(
-                typeof(PlayerController).GetMethod("CheckDodgeRollDepth", BindingFlags.NonPublic | BindingFlags.Instance),
-                typeof(HeartOfFire).GetMethod("CheckDodgeRollDepthHook")
-            );
+        }
+
+        [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.CheckDodgeRollDepth))]
+        [HarmonyILManipulator]
+        public static void ExtraDodgeRoll_Transpiler(ILContext ctx)
+        {
+            var crs = new ILCursor(ctx);
+
+            if (!crs.TryGotoNext(MoveType.After, x => x.MatchStloc(1)))
+                return;
+
+            var edr_a = AccessTools.Method(typeof(HeartOfFire), nameof(ExtraDodgeRoll_Add));
+
+            crs.Emit(OpCodes.Ldloca, 1);
+            crs.Emit(OpCodes.Ldarg_0);
+            crs.Emit(OpCodes.Call, edr_a);
+        }
+
+        public static void ExtraDodgeRoll_Add(ref int current, PlayerController player)
+        {
+            if (player == null || player.passiveItems == null)
+                return;
+
+            foreach (PassiveItem passive in player.passiveItems)
+            {
+                if (passive == null || !(passive is HeartOfFire))
+                    continue;
+
+                current++;
+            }
         }
 
         public static bool CheckDodgeRollDepthHook(Func<PlayerController, bool> orig, PlayerController self)
