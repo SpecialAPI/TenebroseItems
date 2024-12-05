@@ -8,7 +8,7 @@ using ItemAPI;
 
 namespace TenebroseItems
 {
-    [BepInPlugin(GUID, "Tenebrose Items", "1.0.5")]
+    [BepInPlugin(GUID, "Tenebrose Items", "1.0.8")]
     [BepInDependency(ETGModMainBehaviour.GUID)]
     public class Plugin : BaseUnityPlugin
     {

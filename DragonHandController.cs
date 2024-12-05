@@ -14,24 +14,31 @@ namespace TenebroseItems
     {
         public static void Init()
         {
-            Gun gun = ETGMod.Databases.Items.NewGun("Firedrake Hand", "dragon_hand");
+            var gun = ETGMod.Databases.Items.NewGun("Firedrake Hand", "dragon_hand");
             Game.Items.Rename("outdated_gun_mods:firedrake_hand", "spapi:firedrake_hand");
+
             gun.gameObject.AddComponent<DragonHandController>();
-            GunExt.SetShortDescription(gun, "Malevolent Flames");
-            GunExt.SetLongDescription(gun, "Tenebrose has always had a particular affinity for setting things ablaze, weather it be because he's biologically predisposed to, or perhaps he has an innate love for destruction. We would ask him, but we prefer " +
+            gun.SetShortDescription("Malevolent Flames");
+            gun.SetLongDescription("Tenebrose has always had a particular affinity for setting things ablaze, weather it be because he's biologically predisposed to, or perhaps he has an innate love for destruction. We would ask him, but we prefer " +
                 "our faces not to be melted off via purplish flame.");
-            GunExt.SetupSprite(gun, null, "dragon_hand_idle_001", 8);
-            GunExt.SetAnimationFPS(gun, gun.shootAnimation, 16);
-            GunExt.SetAnimationFPS(gun, gun.reloadAnimation, 8);
-            GunExt.AddProjectileModuleFrom(gun, PickupObjectDatabase.GetById(125) as Gun, true, false);
-            Projectile projectile = Instantiate((PickupObjectDatabase.GetById(125) as Gun).DefaultModule.projectiles[0]);
+
+            gun.SetupSprite(null, "dragon_hand_idle_001", 8);
+            gun.SetAnimationFPS(gun.shootAnimation, 16);
+            gun.SetAnimationFPS(gun.reloadAnimation, 8);
+
+            gun.AddProjectileModuleFrom(PickupObjectDatabase.GetById(125) as Gun, true, false);
+            var projectile = Instantiate((PickupObjectDatabase.GetById(125) as Gun).DefaultModule.projectiles[0]);
             projectile.gameObject.SetActive(false);
             FakePrefab.MarkAsFakePrefab(projectile.gameObject);
+            DontDestroyOnLoad(projectile);
+
             projectile.damageTypes = CoreDamageTypes.None;
             projectile.DefaultTintColor = new Color(0.5f, 0f, 1f);
             projectile.HasDefaultTint = true;
             projectile.GetComponent<PierceProjModifier>().penetration = 0;
-            DontDestroyOnLoad(projectile);
+            projectile.FireApplyChance = 0.25f;
+            projectile.baseData.damage += 0.8f;
+
             gun.DefaultModule.projectiles[0] = projectile;
             gun.DefaultModule.numberOfShotsInClip = 7;
             gun.reloadTime = 1.4f;
@@ -39,67 +46,79 @@ namespace TenebroseItems
             gun.gunHandedness = GunHandedness.HiddenOneHanded;
             gun.InfiniteAmmo = true;
             gun.muzzleFlashEffects.type = VFXPoolType.None;
-            gun.quality = PickupObject.ItemQuality.SPECIAL;
+
             gun.barrelOffset.transform.localPosition = new Vector3(0.1875f, 0.1875f, 0f);
             gun.gunSwitchGroup = "BurningHand";
+            gun.quality = PickupObject.ItemQuality.SPECIAL;
             gun.gunClass = GunClass.FIRE;
-            projectile.FireApplyChance = 0.25f;
-            projectile.baseData.damage += 0.8f;
-            foreach (tk2dSpriteAnimationFrame frame in gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames)
+
+            var animator = gun.GetComponent<tk2dSpriteAnimator>();
+            var emptyAnim = animator.GetClipByName(gun.emptyAnimation);
+            var reloadAnim = animator.GetClipByName(gun.reloadAnimation);
+            var shootAnim = animator.GetClipByName(gun.shootAnimation);
+
+            emptyAnim.wrapMode = tk2dSpriteAnimationClip.WrapMode.LoopSection;
+            emptyAnim.loopStart = 1;
+            foreach (var frame in emptyAnim.frames)
             {
-                tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
+                var def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
                 MakeOffset(def, new Vector2(0.1875f, 0.125f));
             }
-            int i = 0;
-            foreach (tk2dSpriteAnimationFrame frame in gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.reloadAnimation).frames)
+
+            for(var i = 0; i < reloadAnim.frames.Length; i++)
             {
-                if (i == 1 || i == 6)
-                {
-                    frame.triggerEvent = true;
-                    frame.eventAudio = "Play_WPN_blasphemy_shot_01";
-                }
-                tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
+                var frame = reloadAnim.frames[i];
+
+                var def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
                 MakeOffset(def, new Vector2(0.1875f, 0.125f));
-                i++;
+
+                if (i != 1 && i != 6)
+                    continue;
+
+                frame.triggerEvent = true;
+                frame.eventAudio = "Play_WPN_blasphemy_shot_01";
             }
-            foreach (tk2dSpriteAnimationFrame frame in gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.shootAnimation).frames)
+
+            foreach (var frame in shootAnim.frames)
             {
-                tk2dSpriteDefinition def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
+                var def = frame.spriteCollection.spriteDefinitions[frame.spriteId];
                 MakeOffset(def, new Vector2(0.125f, 0f));
             }
-            gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames[0].triggerEvent = true;
-            gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).frames[0].eventInfo = "extinguish";
-            gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).wrapMode = tk2dSpriteAnimationClip.WrapMode.LoopSection;
-            gun.GetComponent<tk2dSpriteAnimator>().GetClipByName(gun.emptyAnimation).loopStart = 1;
+
             ETGMod.Databases.Items.Add(gun, null, "ANY");
         }
 
         public override void PostProcessProjectile(Projectile projectile)
         {
-            base.PostProcessProjectile(projectile);
-            float MinDamageMultiplier = 1f;
-            float MaxDamageMultiplier = 5f;
-            float MinScale = 0.5f;
-            float MaxScale = 1.5f;
-            float MaxRoll = 13f;
-            int num = UnityEngine.Random.Range(1, 7) + UnityEngine.Random.Range(1, 7);
-            int num3 = Mathf.Clamp(num, 1, 100);
-            float num5 = Mathf.Lerp(MinScale, MaxScale, Mathf.Clamp01((float)num3 / MaxRoll));
-            float num6 = Mathf.Lerp(MinDamageMultiplier, MaxDamageMultiplier, Mathf.Clamp01((float)num3 / MaxRoll));
-            projectile.AdditionalScaleMultiplier *= num5;
-            projectile.baseData.damage *= num6;
+            const float MinDamageMultiplier = 1f;
+            const float MaxDamageMultiplier = 5f;
+            const float MinScale = 0.5f;
+            const float MaxScale = 1.5f;
+            const float MaxRoll = 13f;
+
+            var roll = UnityEngine.Random.Range(1, 7) + UnityEngine.Random.Range(1, 7);
+
+            var t = roll / MaxRoll;
+            var scaleMult = Mathf.Lerp(MinScale, MaxScale, t);
+            var dmgMult = Mathf.Lerp(MinDamageMultiplier, MaxDamageMultiplier, t);
+
+            projectile.AdditionalScaleMultiplier *= scaleMult;
+            projectile.baseData.damage *= dmgMult;
         }
 
         public static void MakeOffset(tk2dSpriteDefinition def, Vector2 offset)
         {
-            float xOffset = offset.x;
-            float yOffset = offset.y;
+            var xOffset = offset.x;
+            var yOffset = offset.y;
+
             def.position0 += new Vector3(xOffset, yOffset, 0);
             def.position1 += new Vector3(xOffset, yOffset, 0);
             def.position2 += new Vector3(xOffset, yOffset, 0);
             def.position3 += new Vector3(xOffset, yOffset, 0);
+
             def.boundsDataCenter += new Vector3(xOffset, yOffset, 0);
             def.boundsDataExtents += new Vector3(xOffset, yOffset, 0);
+
             def.untrimmedBoundsDataCenter += new Vector3(xOffset, yOffset, 0);
             def.untrimmedBoundsDataExtents += new Vector3(xOffset, yOffset, 0);
         }

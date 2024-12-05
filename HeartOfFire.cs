@@ -15,18 +15,66 @@ namespace TenebroseItems
     [HarmonyPatch]
     public class HeartOfFire : PassiveItem
     {
+        private DamageTypeModifier m_fireImmunity;
+
         public static void Init()
         {
-            string itemName = "Heart of Fire"; 
-            string resourceName = "TenebroseItems/Resources/HeartOfFire"; 
-            GameObject obj = new GameObject(itemName);
+            var itemName = "Heart of Fire"; 
+            var resourceName = "TenebroseItems/Resources/HeartOfFire"; 
+
+            var obj = new GameObject(itemName);
             var item = obj.AddComponent<HeartOfFire>();
             ItemBuilder.AddSpriteToObject(itemName, resourceName, obj);
-            string shortDesc = "Heat in Every Beat";
-            string longDesc = "Grants the user immunity to fire, the ability to double jump and increases damage to enemies on fire.\n\nEvery dragon is born with one and Tenebrose is no exception. Within the gungeon dragons are exceedingly rare in the upper" +
-                " levels which normally will make something like it's heart a commodity that would most likely sell for a small fortune. With that knowledge in retrospect, it wasn't such a good idea to come down here was it?";
+
+            var shortDesc = "Heat in Every Beat";
+            var longDesc = "Grants the user immunity to fire, the ability to double jump and increases damage to enemies on fire.\n\nEvery dragon is born with one and Tenebrose is no exception. Within the gungeon dragons are exceedingly rare in the upper levels which normally will make something like it's heart a commodity that would most likely sell for a small fortune. With that knowledge in retrospect, it wasn't such a good idea to come down here was it?";
             ItemBuilder.SetupItem(item, shortDesc, longDesc, "spapi");
+
             item.quality = ItemQuality.SPECIAL;
+        }
+
+        public override void Pickup(PlayerController player)
+        {
+            base.Pickup(player);
+
+            player.PostProcessProjectile += PostProcessProjectile;
+            if (player.healthHaver == null)
+                return;
+
+            m_fireImmunity = new DamageTypeModifier
+            {
+                damageType = CoreDamageTypes.Fire,
+                damageMultiplier = 0f
+            };
+            player.healthHaver.damageTypeModifiers.Add(m_fireImmunity);
+        }
+
+        public void PostProcessProjectile(Projectile proj, float f)
+        {
+            proj.Ext().ModifyDealtDamage += DouleFireDamage;
+        }
+
+        public void DouleFireDamage(Projectile proj, HealthHaver hh, HealthHaver.ModifyDamageEventArgs args)
+        {
+            if(hh == null || hh.gameActor == null || hh.gameActor.GetEffect("fire") == null)
+                return;
+
+            args.ModifiedDamage *= 1.5f;
+        }
+
+        public override void DisableEffect(PlayerController player)
+        {
+            base.DisableEffect(player);
+
+            if (player == null)
+                return;
+
+            player.PostProcessProjectile -= PostProcessProjectile;
+            if (m_fireImmunity == null || player.healthHaver == null)
+                return;
+
+            player.healthHaver.damageTypeModifiers.Remove(m_fireImmunity);
+            m_fireImmunity = null;
         }
 
         [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.CheckDodgeRollDepth))]
@@ -52,77 +100,11 @@ namespace TenebroseItems
 
             foreach (PassiveItem passive in player.passiveItems)
             {
-                if (passive == null || !(passive is HeartOfFire))
+                if (passive == null || passive is not HeartOfFire)
                     continue;
 
                 current++;
             }
         }
-
-        public static bool CheckDodgeRollDepthHook(Func<PlayerController, bool> orig, PlayerController self)
-        {
-            if (orig(self))
-            {
-                return true;
-            }
-            if (self.IsSlidingOverSurface && !self.DodgeRollIsBlink)
-            {
-                return !self.CurrentRoom.IsShop && GameManager.Instance.CurrentLevelOverrideState != GameManager.LevelOverrideState.TUTORIAL;
-            }
-            bool flag = IsFlagSetForCharacter(self, typeof(PegasusBootsItem));
-            int num = (!flag) ? 1 : 2;
-            if (flag && self.HasActiveBonusSynergy(CustomSynergyType.TRIPLE_JUMP, false))
-            {
-                num++;
-            }
-            foreach(PassiveItem passive in self.passiveItems)
-            {
-                if(passive != null && passive is HeartOfFire)
-                {
-                    num++;
-                }
-            }
-            if (self.DodgeRollIsBlink)
-            {
-                num = 1;
-            }
-            return !self.IsDodgeRolling || self.m_currentDodgeRollDepth < num;
-        }
-
-        public override void Pickup(PlayerController player)
-        {
-            base.Pickup(player);
-            if(player.healthHaver != null)
-            {
-                m_fireImmunity = new DamageTypeModifier
-                {
-                    damageType = CoreDamageTypes.Fire,
-                    damageMultiplier = 0f
-                };
-                player.healthHaver.damageTypeModifiers.Add(m_fireImmunity);
-            }
-            player.OnDealtDamageContext += DidDamage;
-        }
-
-        private void DidDamage(PlayerController player, float damage, bool fatal, HealthHaver hh)
-        {
-            if (hh.gameActor != null && hh.gameActor.GetEffect("fire") != null && !hh.IsDead)
-            {
-                hh.ApplyDamage(damage / 2f, Vector2.zero, "Heart of Fire Extra Damage", CoreDamageTypes.None, DamageCategory.Normal, true, null, false);
-            }
-        }
-
-        public override DebrisObject Drop(PlayerController player)
-        {
-            player.OnDealtDamageContext -= DidDamage;
-            if (m_fireImmunity != null && player.healthHaver != null)
-            {
-                player.healthHaver.damageTypeModifiers.Remove(m_fireImmunity);
-                m_fireImmunity = null;
-            }
-            return base.Drop(player);
-        }
-
-        private DamageTypeModifier m_fireImmunity;
     }
 }

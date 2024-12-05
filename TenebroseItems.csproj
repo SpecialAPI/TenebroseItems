@@ -10,6 +10,7 @@
     <RootNamespace>TenebroseItems</RootNamespace>
     <AssemblyName>TenebroseItems</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <LangVersion>latest</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
@@ -43,6 +44,7 @@
     <Compile Include="ItemAPI\ResourceExtractor.cs" />
     <Compile Include="ItemAPI\SpriteBuilder.cs" />
     <Compile Include="Plugin.cs" />
+    <Compile Include="ProjectileExt.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
