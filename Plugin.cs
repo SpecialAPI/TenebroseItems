@@ -21,6 +21,7 @@ namespace TenebroseItems
         public void GMStart(GameManager man)
         {
             new Harmony(GUID).PatchAll();
+            ETGMod.Assets.SetupSpritesFromAssembly(typeof(Plugin).Assembly, "TenebroseItems/Resources/MTGAPISpriteRoot");
 
             HeartOfFire.Init();
             DragonBreath.Init();
