@@ -7,11 +7,11 @@ using HarmonyLib;
 
 namespace TenebroseItems
 {
-    [BepInPlugin(GUID, "Tenebrose Items", "1.0.8")]
+    [BepInPlugin(MOD_GUID, "Tenebrose Items", "1.0.8")]
     [BepInDependency(ETGModMainBehaviour.GUID)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string GUID = "spapi.etg.tenebroseitems";
+        public const string MOD_GUID = "spapi.etg.tenebroseitems";
 
         public void Start()
         {
@@ -20,7 +20,7 @@ namespace TenebroseItems
 
         public void GMStart(GameManager man)
         {
-            new Harmony(GUID).PatchAll();
+            new Harmony(MOD_GUID).PatchAll();
             ETGMod.Assets.SetupSpritesFromAssembly(typeof(Plugin).Assembly, "TenebroseItems/Resources/MTGAPISpriteRoot");
 
             HeartOfFire.Init();
