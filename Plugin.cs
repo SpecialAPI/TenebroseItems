@@ -9,6 +9,7 @@ namespace TenebroseItems
 {
     [BepInPlugin(MOD_GUID, "Tenebrose Items", "1.0.8")]
     [BepInDependency(ETGModMainBehaviour.GUID)]
+    [BepInDependency(Alexandria.Alexandria.GUID)]
     public class Plugin : BaseUnityPlugin
     {
         public const string MOD_GUID = "spapi.etg.tenebroseitems";
