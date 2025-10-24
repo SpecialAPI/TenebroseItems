@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using BepInEx;
 using HarmonyLib;
-using ItemAPI;
 
 namespace TenebroseItems
 {
@@ -14,7 +13,7 @@ namespace TenebroseItems
     {
         public const string GUID = "spapi.etg.tenebroseitems";
 
-        public void Awake()
+        public void Start()
         {
             ETGModMainBehaviour.WaitForGameManagerStart(GMStart);
         }
@@ -23,8 +22,6 @@ namespace TenebroseItems
         {
             new Harmony(GUID).PatchAll();
 
-            FakePrefabHooks.Init();
-            ItemBuilder.Init();
             HeartOfFire.Init();
             DragonBreath.Init();
             DragonHandController.Init();

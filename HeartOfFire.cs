@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using ItemAPI;
+using Alexandria.ItemAPI;
 using HarmonyLib;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
