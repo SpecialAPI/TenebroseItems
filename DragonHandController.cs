@@ -51,6 +51,7 @@ namespace TenebroseItems
             gun.gunSwitchGroup = "BurningHand";
             gun.quality = PickupObject.ItemQuality.SPECIAL;
             gun.gunClass = GunClass.FIRE;
+            gun.PreventStartingOwnerFromDropping = true;
 
             var animator = gun.GetComponent<tk2dSpriteAnimator>();
             var emptyAnim = animator.GetClipByName(gun.emptyAnimation);
